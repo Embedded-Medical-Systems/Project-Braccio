@@ -1,3 +1,5 @@
+#include <SPI.h>
+
 struct Cart {
   byte slaveSelect;
   byte linPotPin;
@@ -48,9 +50,15 @@ void setCartPins(Cart cart) {
 }
 
 //speed should be between -1.0 --> 1.0
-void setMotorSpeed(byte salveSelect, boolean isTranslation, float speed) {
-  //TODO create protcol for sending motor control over SPI
-  //TODO send that protocol over SPI
+void setMotorSpeed(byte slaveSelect, float transSpeed, float rotSpeed) {
+  byte directions = ((transSpeed >= 0) << 1) | (rotSpeed >= 0);
+  byte transSpeedByte = min(abs(transSpeed) * 255, 255);
+  byte rotSpeedByte = min(abs(rotSpeed) * 255, 255);
+  digitalWrite(slaveSelect, LOW);
+  SPI.transfer(directions);
+  SPI.transfer(transSpeedByte);
+  SPI.transfer(rotSpeedByte);
+  digitalWrite(slaveSelect, HIGH);
 }
 
 void linearControl(float dist, Cart cart) {
