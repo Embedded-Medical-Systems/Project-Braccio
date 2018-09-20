@@ -19,9 +19,7 @@ const byte ROT = 2;
 const byte NUM_BYTES = 3;
 byte currentByte = 0;
 
-byte controlBytes[NUM_BYTES] = {3, 0  , 0};
-char isLedOn = false;
-byte pos;
+byte controlBytes[NUM_BYTES] = {3, 0, 0};
 
 void setup() {
   Serial.begin(9600);
@@ -45,13 +43,10 @@ void setup() {
   pinMode(4, OUTPUT);
 }
 
-boolean leds[3] = {0, 0, 0};
-byte currentLED = 0;
-
 ISR (SPI_STC_vect)
 {
-  if(!digitalRead(slaveSelect) && currentLED < 3){
-    leds[currentLED++] = SPDR;
+  if(!digitalRead(slaveSelect) && currentByte < NUM_BYTES){
+    controlBytes[currentByte] = SPDR;
   }
 }
 
@@ -61,11 +56,18 @@ void loop() {
     if(lastSlaveSelect == LOW){
       lastSlaveSelect = HIGH;
       pinMode(MISO, INPUT);
-      currentLED = 0;
+      currentByte = 0;
     }
-    for(int i = 0; i < 3; i++){
-      digitalWrite(2 + i, leds[i] ? HIGH : LOW);
-    }
+    
+    digitalWrite(transForward1, controlBytes[DIRECTIONS] & 2 ? HIGH : LOW);
+    digitalWrite(transBack1, controlBytes[DIRECTIONS] & 2 ? LOW : HIGH);
+    digitalWrite(controlBytes[DIRECTIONS] & 2 ? transBack2 : transForward2, LOW);
+    analogWrite(controlBytes[DIRECTIONS] & 2 ? transForward2 : transBack2, controlBytes[TRANS] & 0xff);
+    
+    digitalWrite(rotForward1, controlBytes[DIRECTIONS] & 1 ? HIGH : LOW);
+    digitalWrite(rotBack1, controlBytes[DIRECTIONS] & 1 ? LOW : HIGH);
+    digitalWrite(controlBytes[DIRECTIONS] & 1 ? rotBack2 : rotForward2, LOW);
+    analogWrite(controlBytes[DIRECTIONS] & 1 ? rotForward2 : rotBack2, controlBytes[ROT] & 0xff);
   }
   
   else {    

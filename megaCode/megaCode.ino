@@ -58,15 +58,14 @@ void setMotorSpeed(byte slaveSelect, float transSpeed, float rotSpeed) {
   unsigned char transSpeedByte = min(abs(transSpeed) * 255, 255);
   unsigned char rotSpeedByte = min(abs(rotSpeed) * 255, 255);
   digitalWrite(slaveSelect, LOW);
-  delay(20);
+  delay(1);
   SPI.transfer(directions);
-  delay(20);
+  delay(1);
   SPI.transfer(transSpeedByte);
-  delay(20);
+  delay(1);
   SPI.transfer(rotSpeedByte);
-  delay(20);
-  digitalWrite(slaveSelect, HIGH);
-  Serial.println(rotSpeedByte);
+  delay(1);
+  digitalWrite(leftFrontCart.slaveSelect, HIGH);
 }
 
 void linearControl(float dist, Cart cart) {
@@ -105,42 +104,4 @@ void loop() {
   //TODO get two (X,Y,Z) positions from vive
   //TODO put them both through physics model
   //TODO use control loop on physics model
-
-  digitalWrite(leftFrontCart.slaveSelect, LOW);
-  delay(1);
-  SPI.transfer(counter & 1);
-  delay(1);
-  SPI.transfer((counter >> 1) & 1);
-  delay(1);
-  SPI.transfer((counter >> 2) & 1);
-  delay(1);
-  digitalWrite(leftFrontCart.slaveSelect, HIGH);
-  delay(10);
-  digitalWrite(rightFrontCart.slaveSelect, LOW);
-  delay(1);
-  SPI.transfer(counter & 1);
-  delay(1);
-  SPI.transfer((counter >> 1) & 1);
-  delay(1);
-  SPI.transfer((counter >> 2) & 1);
-  delay(1);
-  digitalWrite(rightFrontCart.slaveSelect, HIGH);
-  delay(10);
-  digitalWrite(leftBackCart.slaveSelect, LOW);
-  delay(1);
-  SPI.transfer(counter & 1);
-  delay(1);
-  SPI.transfer((counter >> 1) & 1);
-  delay(1);
-  SPI.transfer((counter >> 2) & 1);
-  delay(1);
-  digitalWrite(leftBackCart.slaveSelect, HIGH);
-  delay(10);
-  Serial.println(counter & 1);
-  Serial.println((counter >> 1) & 1);
-  Serial.println((counter >> 2) & 1);
-  counter++;
-  if(counter > 7){
-    counter = 0;
-  }
 }
