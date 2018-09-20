@@ -1,3 +1,5 @@
+#include <SPI.h>
+
 struct Cart {
   byte slaveSelect;
   byte linPotPin;
@@ -42,15 +44,28 @@ const Cart rightBackCart = {
 
 void setCartPins(Cart cart) {
   pinMode(cart.slaveSelect, OUTPUT);
+  digitalWrite(cart.slaveSelect, HIGH);
   pinMode(cart.linPotPin, OUTPUT);
   pinMode(cart.rot1Pin, OUTPUT);
   pinMode(cart.rot2Pin, OUTPUT);
 }
 
 //speed should be between -1.0 --> 1.0
-void setMotorSpeed(byte salveSelect, boolean isTranslation, float speed) {
-  //TODO create protcol for sending motor control over SPI
-  //TODO send that protocol over SPI
+void setMotorSpeed(byte slaveSelect, float transSpeed, float rotSpeed) {
+  unsigned char directions = ((transSpeed >= 0) << 1) | (rotSpeed >= 0);
+  unsigned char transSpeedByte = min(abs(transSpeed) * 255, 255);
+  unsigned char rotSpeedByte = min(abs(rotSpeed) * 255, 255);
+  digitalWrite(slaveSelect, LOW);
+  delay(20);
+  SPI.transfer(directions);
+  delay(20);
+  SPI.transfer(transSpeedByte);
+  delay(20);
+  SPI.transfer(rotSpeedByte);
+  delay(20);
+  digitalWrite(slaveSelect, HIGH);
+  
+  Serial.println(rotSpeedByte);
 }
 
 void linearControl(float dist, Cart cart) {
@@ -75,10 +90,12 @@ void physicsModel(float x, float y, float z, float& d1, float& d2, float& theta)
 
 void setup() {
   // put your setup code here, to run once:
+  Serial.begin(9600);
   setCartPins(leftFrontCart);
   setCartPins(leftBackCart);
   setCartPins(rightFrontCart);
   setCartPins(rightBackCart);
+  SPI.begin();
 }
 
 void loop() {

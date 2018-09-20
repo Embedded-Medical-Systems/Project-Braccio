@@ -11,16 +11,16 @@ byte rotBack1 = 7;
 byte rotBack2 = 9;
 
 boolean lastSlaveSelect = HIGH;
-const byte DIRECTIONS_INDEX = 0;
-const byte TRANS_INDEX = 1;
-const byte ROT_INDEX = 2;
-const byte FINISHED_INDEX = 3;
+const byte DIRECTIONS = 0;
+const byte TRANS = 1;
+const byte ROT = 2;
+const byte NUM_BYTES = 3;
+byte currentByte = 0;
 
-volatile byte directions = 3;
-volatile byte transSpeed = 0;
-volatile byte rotSpeed = 0;
+byte controlBytes[NUM_BYTES] = {3, 0  , 0};
 
 void setup() {
+  Serial.begin(9600);
   pinMode(transForward1, OUTPUT);
   pinMode(transForward2, OUTPUT);
   pinMode(transBack1, OUTPUT);
@@ -38,40 +38,44 @@ void setup() {
    
 }
 
-byte requestByte(byte index){
-  SPDR = index;
-  while(!(SPSR & (1 << SPIF)));
-  return SPDR;
+void SPIRecieve(){
+  SPDR = DIRECTIONS;
+  while(!(SPSR & (1<<SPIF)));
+  controlBytes[DIRECTIONS] = SPDR;
+  SPDR = TRANS;
+  while(!(SPSR & (1<<SPIF)));
+  controlBytes[TRANS] = SPDR;
+  SPDR = ROT;
+  while(!(SPSR & (1<<SPIF)));
+  controlBytes[ROT] = SPDR;
+  Serial.println(controlBytes[ROT]);
 }
 
 void loop() {
-  if(digitalRead(slaveSelect) == HIGH){
+  //Serial.println(digitalRead(slaveSelect));
+  if(digitalRead(slaveSelect)){
     //if its the first cycle with a high slave select
     if(lastSlaveSelect == LOW){
       lastSlaveSelect = HIGH;
       pinMode(MISO, INPUT);
     }
-    //set motor speeds & directions
-    digitalWrite(transForward1, directions & 2 ? HIGH : LOW);
-    digitalWrite(transForward2, directions & 2 ? HIGH : LOW);
-    digitalWrite(transBack1, directions & 2 ? LOW : HIGH);
-    digitalWrite(transBack2, directions & 2 ? LOW : HIGH);
-    analogWrite(directions & 2 ? transForward2 : transBack2, transSpeed & 0xff);
+    digitalWrite(transForward1, controlBytes[DIRECTIONS] & 2 ? HIGH : LOW);
+    digitalWrite(transBack1, controlBytes[DIRECTIONS] & 2 ? LOW : HIGH);
+    digitalWrite(controlBytes[DIRECTIONS] & 2 ? transBack2 : transForward2, LOW);
+    analogWrite(controlBytes[DIRECTIONS] & 2 ? transForward2 : transBack2, controlBytes[TRANS] & 0xff);
     
-    digitalWrite(rotForward1, directions & 1 ? HIGH : LOW);
-    digitalWrite(rotForward2, directions & 1 ? HIGH : LOW);
-    digitalWrite(rotBack1, directions & 1 ? LOW : HIGH);
-    digitalWrite(rotBack2, directions & 1 ? LOW : HIGH);
-    analogWrite(directions & 1 ? rotForward2 : rotBack2, rotSpeed & 0xff);
+    digitalWrite(rotForward1, controlBytes[DIRECTIONS] & 1 ? HIGH : LOW);
+    digitalWrite(rotBack1, controlBytes[DIRECTIONS] & 1 ? LOW : HIGH);
+    digitalWrite(controlBytes[DIRECTIONS] & 1 ? rotBack2 : rotForward2, LOW);
+    analogWrite(controlBytes[DIRECTIONS] & 1 ? rotForward2 : rotBack2, controlBytes[ROT] & 0xff);
   }
   
   else {
     if(lastSlaveSelect == HIGH){
       lastSlaveSelect = LOW;
-      directions = requestByte(DIRECTIONS_INDEX);
-      transSpeed = requestByte(TRANS_INDEX);
-      rotSpeed = requestByte(ROT_INDEX);
-      requestByte(FINISHED_INDEX);
+      pinMode(MISO, OUTPUT);
+      SPIRecieve();
     }
   }
+
 }
