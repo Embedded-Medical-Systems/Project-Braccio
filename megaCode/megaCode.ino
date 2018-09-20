@@ -14,6 +14,8 @@ const float R = 1;
 
 const float linPotFact = 100 / 1023.f;
 
+boolean isLedOn = true;
+
 const Cart leftFrontCart = {
   .slaveSelect = 2,
   .linPotPin = A0,
@@ -64,7 +66,6 @@ void setMotorSpeed(byte slaveSelect, float transSpeed, float rotSpeed) {
   SPI.transfer(rotSpeedByte);
   delay(20);
   digitalWrite(slaveSelect, HIGH);
-  
   Serial.println(rotSpeedByte);
 }
 
@@ -98,9 +99,48 @@ void setup() {
   SPI.begin();
 }
 
+int counter = 0;
+
 void loop() {
   //TODO get two (X,Y,Z) positions from vive
   //TODO put them both through physics model
   //TODO use control loop on physics model
 
+  digitalWrite(leftFrontCart.slaveSelect, LOW);
+  delay(1);
+  SPI.transfer(counter & 1);
+  delay(1);
+  SPI.transfer((counter >> 1) & 1);
+  delay(1);
+  SPI.transfer((counter >> 2) & 1);
+  delay(1);
+  digitalWrite(leftFrontCart.slaveSelect, HIGH);
+  delay(10);
+  digitalWrite(rightFrontCart.slaveSelect, LOW);
+  delay(1);
+  SPI.transfer(counter & 1);
+  delay(1);
+  SPI.transfer((counter >> 1) & 1);
+  delay(1);
+  SPI.transfer((counter >> 2) & 1);
+  delay(1);
+  digitalWrite(rightFrontCart.slaveSelect, HIGH);
+  delay(10);
+  digitalWrite(leftBackCart.slaveSelect, LOW);
+  delay(1);
+  SPI.transfer(counter & 1);
+  delay(1);
+  SPI.transfer((counter >> 1) & 1);
+  delay(1);
+  SPI.transfer((counter >> 2) & 1);
+  delay(1);
+  digitalWrite(leftBackCart.slaveSelect, HIGH);
+  delay(10);
+  Serial.println(counter & 1);
+  Serial.println((counter >> 1) & 1);
+  Serial.println((counter >> 2) & 1);
+  counter++;
+  if(counter > 7){
+    counter = 0;
+  }
 }
