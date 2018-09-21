@@ -1,6 +1,8 @@
+#include <EEPROM.h>
+
 #include <SPI.h>
 
-byte slaveSelect = A7;
+byte slaveSelect = A3;
 byte transForward1 = 4;
 byte transForward2 = 6;
 byte transBack1 = 3;
@@ -10,17 +12,17 @@ byte rotForward2 = 10;
 byte rotBack1 = 7;
 byte rotBack2 = 9;
 
-int readCounter = -1;
-const byte DIRECTIONS_INDEX = 0;
-const byte TRANS_INDEX = 1;
-const byte ROT_INDEX = 2;
+boolean lastSlaveSelect = HIGH;
+const byte DIRECTIONS = 0;
+const byte TRANS = 1;
+const byte ROT = 2;
+const byte NUM_BYTES = 3;
+byte currentByte = 0;
 
-volatile byte directions = 3;
-volatile byte transSpeed = 0;
-volatile byte rotSpeed = 0;
+byte controlBytes[NUM_BYTES] = {3, 0, 0};
 
 void setup() {
-  pinMode(slaveSelect, INPUT);
+  Serial.begin(9600);
   pinMode(transForward1, OUTPUT);
   pinMode(transForward2, OUTPUT);
   pinMode(transBack1, OUTPUT);
@@ -30,40 +32,49 @@ void setup() {
   pinMode(rotBack1, OUTPUT);
   pinMode(rotBack2, OUTPUT);
   
-  SPI.begin();
-  SPI.setBitOrder(MSBFIRST);
-  SPCR |= _BV(SPE);
-  SPI.attachInterrupt();
+  SPCR |= (1 << SPE); //turns on SPI
+  SPCR |= _BV(SPIE); //attaches interupt
+  pinMode(slaveSelect, INPUT);
+  pinMode(SCK, INPUT);
+  pinMode(MOSI, INPUT);
+  pinMode(MISO, INPUT);
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
 }
 
-ISR (SPI_STC_vect) {
-  if (++readCounter == DIRECTIONS_INDEX){
-    directions = SPDR;
+ISR (SPI_STC_vect)
+{
+  if(!digitalRead(slaveSelect) && currentByte < NUM_BYTES){
+    controlBytes[currentByte] = SPDR;
   }
-  else if (readCounter == TRANS_INDEX){
-    transSpeed = SPDR;
-  }
-  else {
-    rotSpeed = SPDR;
-    readCounter =- -1;
-  }
-  
 }
 
 void loop() {
-  digitalWrite(transForward1, directions & 2 ? HIGH : LOW);
-  digitalWrite(transForward2, directions & 2 ? HIGH : LOW);
+  if(digitalRead(slaveSelect)){
+    //if its the first cycle with a high slave select
+    if(lastSlaveSelect == LOW){
+      lastSlaveSelect = HIGH;
+      pinMode(MISO, INPUT);
+      currentByte = 0;
+    }
+    
+    digitalWrite(transForward1, controlBytes[DIRECTIONS] & 2 ? HIGH : LOW);
+    digitalWrite(transBack1, controlBytes[DIRECTIONS] & 2 ? LOW : HIGH);
+    digitalWrite(controlBytes[DIRECTIONS] & 2 ? transBack2 : transForward2, LOW);
+    analogWrite(controlBytes[DIRECTIONS] & 2 ? transForward2 : transBack2, controlBytes[TRANS] & 0xff);
+    
+    digitalWrite(rotForward1, controlBytes[DIRECTIONS] & 1 ? HIGH : LOW);
+    digitalWrite(rotBack1, controlBytes[DIRECTIONS] & 1 ? LOW : HIGH);
+    digitalWrite(controlBytes[DIRECTIONS] & 1 ? rotBack2 : rotForward2, LOW);
+    analogWrite(controlBytes[DIRECTIONS] & 1 ? rotForward2 : rotBack2, controlBytes[ROT] & 0xff);
+  }
+  
+  else {    
+    if(lastSlaveSelect == HIGH){
+      lastSlaveSelect = LOW;
+      pinMode(MISO, OUTPUT);
+    }
+  }
 
-  digitalWrite(transBack1, directions & 2 ? LOW : HIGH);
-  digitalWrite(transBack2, directions & 2 ? LOW : HIGH);
-
-  analogWrite(directions & 2 ? transForward2 : transBack2, transSpeed & 0xff);
-
-  digitalWrite(rotForward1, directions & 1 ? HIGH : LOW);
-  digitalWrite(rotForward2, directions & 1 ? HIGH : LOW);
-
-  digitalWrite(rotBack1, directions & 1 ? LOW : HIGH);
-  digitalWrite(rotBack2, directions & 1 ? LOW : HIGH);
-
-  analogWrite(directions & 1 ? rotForward2 : rotBack2, rotSpeed & 0xff);
 }
