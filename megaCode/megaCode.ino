@@ -71,6 +71,7 @@ Cart rightBackCart = {
 
 void setCartPins(Cart cart) {
   pinMode(cart.slaveSelect, OUTPUT);
+  digitalWrite(cart.slaveSelect, HIGH);
   pinMode(cart.linPotPin, OUTPUT);
   pinMode(cart.rot1Pin, OUTPUT);
   pinMode(cart.rot2Pin, OUTPUT);
@@ -78,14 +79,18 @@ void setCartPins(Cart cart) {
 
 //speed should be between -1.0 --> 1.0
 void setMotorSpeed(byte slaveSelect, float transSpeed, float rotSpeed) {
-  byte directions = ((transSpeed >= 0) << 1) | (rotSpeed >= 0);
-  byte transSpeedByte = min(abs(transSpeed) * 255, 255);
-  byte rotSpeedByte = min(abs(rotSpeed) * 255, 255);
+  unsigned char directions = ((transSpeed >= 0) << 1) | (rotSpeed >= 0);
+  unsigned char transSpeedByte = min(abs(transSpeed) * 255, 255);
+  unsigned char rotSpeedByte = min(abs(rotSpeed) * 255, 255);
   digitalWrite(slaveSelect, LOW);
+  delay(1);
   SPI.transfer(directions);
+  delay(1);
   SPI.transfer(transSpeedByte);
+  delay(1);
   SPI.transfer(rotSpeedByte);
-  digitalWrite(slaveSelect, HIGH);
+  delay(1);
+  digitalWrite(leftFrontCart.slaveSelect, HIGH);
 }
 
 float linearControl(float dist, Cart& cart) {
@@ -133,11 +138,15 @@ void physicsModel(float x, float y, float z, float& d1, float& d2, float& theta)
 
 void setup() {
   // put your setup code here, to run once:
+  Serial.begin(9600);
   setCartPins(leftFrontCart);
   setCartPins(leftBackCart);
   setCartPins(rightFrontCart);
   setCartPins(rightBackCart);
+  SPI.begin();
 }
+
+int counter = 0;
 
 void loop() {
   //TODO get two (X,Y,Z) positions from vive
