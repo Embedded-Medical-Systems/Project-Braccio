@@ -5,17 +5,20 @@ struct Cart {
   const byte linPotPin;
   const byte rot1Pin;
   const byte rot2Pin;
-  const float kpTrans;
-  const float kdTrans;
-  const float kpRot;
-  const float kdRot;
-  float prevErrorTrans;
-  float prevErrorRot;
+  const long long kpTrans;
+  const long long kdTrans;
+  const long long kpRot;
+  const long long kdRot;
+  long long prevErrorTrans;
+  long long prevErrorRot;
 };
 
-const float R = 1;
+const long long scaledUnit = 10000000;
+const long long linPotFact = (100 * scaledUnit) / 1023;
 
-const float linPotFact = 100 / 1023.f;
+long long readPot(const int potPin1, const int potPin2){
+  return 0;
+}
 
 Cart leftFrontCart = {
   .slaveSelect = 2,
@@ -72,16 +75,16 @@ Cart rightBackCart = {
 void setCartPins(Cart cart) {
   pinMode(cart.slaveSelect, OUTPUT);
   digitalWrite(cart.slaveSelect, HIGH);
-  pinMode(cart.linPotPin, OUTPUT);
-  pinMode(cart.rot1Pin, OUTPUT);
-  pinMode(cart.rot2Pin, OUTPUT);
+  pinMode(cart.linPotPin, INPUT);
+  pinMode(cart.rot1Pin, INPUT);
+  pinMode(cart.rot2Pin, INPUT);
 }
 
-//speed should be between -1.0 --> 1.0
-void setMotorSpeed(byte slaveSelect, float transSpeed, float rotSpeed) {
+//speed should be between -255 --> 255
+void setMotorSpeed(byte slaveSelect, int transSpeed, int rotSpeed) {
   unsigned char directions = ((transSpeed >= 0) << 1) | (rotSpeed >= 0);
-  unsigned char transSpeedByte = min(abs(transSpeed) * 255, 255);
-  unsigned char rotSpeedByte = min(abs(rotSpeed) * 255, 255);
+  unsigned char transSpeedByte = min(abs(transSpeed), 255);
+  unsigned char rotSpeedByte = min(abs(rotSpeed), 255);
   digitalWrite(slaveSelect, LOW);
   delay(1);
   SPI.transfer(directions);
@@ -93,48 +96,46 @@ void setMotorSpeed(byte slaveSelect, float transSpeed, float rotSpeed) {
   digitalWrite(leftFrontCart.slaveSelect, HIGH);
 }
 
-float linearControl(float dist, Cart& cart) {
-  float error = dist - analogRead(cart.linPotPin) * linPotFact;
+short linearControl(long long dist, Cart& cart) {
+  long long error = dist - analogRead(cart.linPotPin) * linPotFact;
 
-  float proportional = error * cart.kpTrans;
+  long long proportional = error * cart.kpTrans;
   if(cart.prevErrorTrans == 0){
     cart.prevErrorTrans = error;
   }
-  float derivative = (error - cart.prevErrorTrans) * cart.kdTrans;
+  long long derivative = (error - cart.prevErrorTrans) * cart.kdTrans;
   cart.prevErrorTrans = error;
 
-  return proportional + derivative;
+  return (proportional + derivative) / scaledUnit; //TODO scale from -255 to 255
 
 }
 
-float rotationControl(float theta, Cart& cart) {
-  float currentTheta = readPot(cart.rot1Pin, cart.rot2Pin);
-  float error = theta - currentTheta;
+short rotationControl(long long theta, Cart& cart) {
+  long long currentTheta = readPot(cart.rot1Pin, cart.rot2Pin);
+  long long error = theta - currentTheta;
 
-  float proportional = error * cart.kpRot;
+  long long proportional = error * cart.kpRot;
   if(cart.prevErrorRot == 0){
     cart.prevErrorRot = error;
   }
-  float derivative = (error - cart.prevErrorRot) * cart.kdRot;
+  long long derivative = (error - cart.prevErrorRot) * cart.kdRot;
   cart.prevErrorRot = error;
 
-  return proportional + derivative;
+  return (proportional + derivative) / scaledUnit; //TODO scale from -255 to 255
 }
 
-float readPot(const int potPin1, const int potPin2){
-  return 0;
+
+
+void getDistances(long long& d1, long long& d2, long long& theta) {
+  //read vive distances
 }
 
-void getControllerPosition(float& x, float& y, float& z) {
-  //read vive positions
-}
-
-void physicsModel(float x, float y, float z, float& d1, float& d2, float& theta) {
-  theta = atan(y / x);
-  float sqrtXY = sqrt(x * x + y * y);
-  d2 = z - sqrt(R * R - (R - sqrtXY) * (R - sqrtXY));
-  d1 =  d2 + R * acos((R - sqrtXY) / R);
-}
+//void physicsModel(float x, float y, float z, float& d1, float& d2, float& theta) {
+//  theta = atan(y / x);
+//  float sqrtXY = sqrt(x * x + y * y);
+//  d2 = z - sqrt(R * R - (R - sqrtXY) * (R - sqrtXY));
+//  d1 =  d2 + R * acos((R - sqrtXY) / R);
+//}
 
 void setup() {
   // put your setup code here, to run once:
@@ -151,17 +152,17 @@ int counter = 0;
 void loop() {
   //TODO get two (X,Y,Z) positions from vive
   //TODO put them both through physics model
-  float leftd1, rightd1, leftd2, rightd2, leftTheta, rightTheta;
+  long long leftd1, rightd1, leftd2, rightd2, leftTheta, rightTheta;
 
-  float leftFrontLin = linearControl(leftd1,leftFrontCart);
-  float leftBackLin = linearControl(leftd2,leftBackCart);
-  float leftFrontRot = rotationControl(leftTheta, leftFrontCart);
-  float leftBackRot = rotationControl(leftTheta, leftBackCart);
+  short leftFrontLin = linearControl(leftd1,leftFrontCart);
+  short leftBackLin = linearControl(leftd2,leftBackCart);
+  short leftFrontRot = rotationControl(leftTheta, leftFrontCart);
+  short leftBackRot = rotationControl(leftTheta, leftBackCart);
 
-  float rightFrontLin = linearControl(rightd1,rightFrontCart);
-  float rightBackLin = linearControl(rightd2,leftBackCart);
-  float rightFrontRot = rotationControl(rightTheta, rightFrontCart);
-  float rightBackRot = rotationControl(rightTheta, leftBackCart);
+  short rightFrontLin = linearControl(rightd1,rightFrontCart);
+  short rightBackLin = linearControl(rightd2,leftBackCart);
+  short rightFrontRot = rotationControl(rightTheta, rightFrontCart);
+  short rightBackRot = rotationControl(rightTheta, leftBackCart);
   
   setMotorSpeed(leftFrontCart.slaveSelect, leftFrontLin, leftFrontRot);
   setMotorSpeed(leftBackCart.slaveSelect, leftBackLin, leftBackRot);
