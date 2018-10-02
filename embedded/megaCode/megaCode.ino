@@ -13,6 +13,9 @@ struct Cart {
   long long prevErrorRot;
 };
 
+volatile boolean dataReady = false;
+
+const byte sizeOfUnit = 8;
 const long long scaledUnit = 10000000;
 const long long linPotFact = (100 * scaledUnit) / 1023;
 
@@ -126,8 +129,33 @@ short rotationControl(long long theta, Cart& cart) {
 
 
 
-void getDistances(long long& d1, long long& d2, long long& theta) {
-  //read vive distances
+void getDistances(long long& leftd1, long long& rightd1, long long& leftd2,
+                  long long& rightd2, long long& leftTheta, long long& rightTheta) {
+                    
+  for(int i = 0; i < sizeOfUnit; i++){
+    leftd1 += ((long long)Serial.read()) << 8 * i;
+  }
+
+  for(int i = 0; i < sizeOfUnit; i++){
+    rightd1 += ((long long)Serial.read()) << 8 * i;
+  }
+
+  for(int i = 0; i < sizeOfUnit; i++){
+    leftd2 += ((long long)Serial.read()) << 8 * i;
+  }
+
+  for(int i = 0; i < sizeOfUnit; i++){
+    rightd2 += ((long long)Serial.read()) << 8 * i;
+  }
+
+  for(int i = 0; i < sizeOfUnit; i++){
+    leftTheta += ((long long)Serial.read()) << 8 * i;
+  }
+
+  for(int i = 0; i < sizeOfUnit; i++){
+    rightTheta += ((long long)Serial.read()) << 8 * i;
+  }
+
 }
 
 //void physicsModel(float x, float y, float z, float& d1, float& d2, float& theta) {
@@ -152,7 +180,11 @@ int counter = 0;
 void loop() {
   //TODO get two (X,Y,Z) positions from vive
   //TODO put them both through physics model
-  long long leftd1, rightd1, leftd2, rightd2, leftTheta, rightTheta;
+  long long leftd1 = 0, rightd1 = 0, leftd2 = 0, rightd2 = 0, leftTheta = 0, rightTheta = 0;
+
+  if(Serial.available()){
+    getDistances(leftd1, rightd1, leftd2, rightd2, leftTheta, rightTheta);
+  }
 
   short leftFrontLin = linearControl(leftd1,leftFrontCart);
   short leftBackLin = linearControl(leftd2,leftBackCart);
