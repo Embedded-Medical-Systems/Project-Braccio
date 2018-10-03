@@ -13,11 +13,11 @@ struct Cart {
   long long prevErrorRot;
 };
 
-volatile boolean dataReady = false;
-
 const byte sizeOfUnit = 8;
 const long long scaledUnit = 10000000;
 const long long linPotFact = (100 * scaledUnit) / 1023;
+
+long long leftd1, rightd1, leftd2, rightd2, leftTheta, rightTheta;
 
 long long readPot(const int potPin1, const int potPin2){
   return 0;
@@ -131,27 +131,33 @@ short rotationControl(long long theta, Cart& cart) {
 
 void getDistances(long long& leftd1, long long& rightd1, long long& leftd2,
                   long long& rightd2, long long& leftTheta, long long& rightTheta) {
-                    
+
+  leftd1 = 0;
   for(int i = 0; i < sizeOfUnit; i++){
     leftd1 += ((long long)Serial.read()) << 8 * i;
   }
 
+  rightd1 = 0;
   for(int i = 0; i < sizeOfUnit; i++){
     rightd1 += ((long long)Serial.read()) << 8 * i;
   }
 
+  leftd2 = 0;
   for(int i = 0; i < sizeOfUnit; i++){
     leftd2 += ((long long)Serial.read()) << 8 * i;
   }
 
+  rightd2 = 0;
   for(int i = 0; i < sizeOfUnit; i++){
     rightd2 += ((long long)Serial.read()) << 8 * i;
   }
 
+  leftTheta = 0;
   for(int i = 0; i < sizeOfUnit; i++){
     leftTheta += ((long long)Serial.read()) << 8 * i;
   }
 
+  rightTheta = 0;
   for(int i = 0; i < sizeOfUnit; i++){
     rightTheta += ((long long)Serial.read()) << 8 * i;
   }
@@ -175,11 +181,7 @@ void setup() {
   SPI.begin();
 }
 
-int counter = 0;
-
 void loop() {
-  //TODO get two (X,Y,Z) positions from vive
-  //TODO put them both through physics model
   long long leftd1 = 0, rightd1 = 0, leftd2 = 0, rightd2 = 0, leftTheta = 0, rightTheta = 0;
 
   if(Serial.available()){

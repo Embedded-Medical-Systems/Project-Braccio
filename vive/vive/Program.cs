@@ -8,7 +8,6 @@ namespace vive
         static void Main(string[] args)
         {
             ArduinoHandler handler = new ArduinoHandler(9600, "COM4");
-            handler.sendValue(12345678);
         }
 
     }
