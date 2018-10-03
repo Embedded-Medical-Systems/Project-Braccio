@@ -162,6 +162,57 @@ void getDistances(long long& leftd1, long long& rightd1, long long& leftd2,
     rightTheta += ((long long)Serial.read()) << 8 * i;
   }
 
+  sendPotValues();
+}
+
+void sendPotValues(){
+  byte potValues[sizeOfUnit * 4 * 2];
+  
+  long long currPot = analogRead(leftFrontCart.linPotPin) * linPotFact;
+  for(int i = 0; i < sizeOfUnit; i++){
+    potValues[i] = currPot & 0xff;
+    currPot >>= 8;
+  }
+  currPot = readPot(leftFrontCart.rot1Pin, leftFrontCart.rot2Pin);
+  for(int i = 0; i < sizeOfUnit; i++){
+    potValues[8 + i] = currPot & 0xff;
+    currPot >>= 8;
+  }
+
+  currPot = analogRead(rightFrontCart.linPotPin) * linPotFact;
+  for(int i = 0; i < sizeOfUnit; i++){
+    potValues[16 + i] = currPot & 0xff;
+    currPot >>= 8;
+  }
+  currPot = readPot(rightFrontCart.rot1Pin, rightFrontCart.rot2Pin);
+  for(int i = 0; i < sizeOfUnit; i++){
+    potValues[24 + i] = currPot & 0xff;
+    currPot >>= 8;
+  }
+
+  currPot = analogRead(leftBackCart.linPotPin) * linPotFact;
+  for(int i = 0; i < sizeOfUnit; i++){
+    potValues[32 + i] = currPot & 0xff;
+    currPot >>= 8;
+  }
+  currPot = readPot(leftBackCart.rot1Pin, leftBackCart.rot2Pin);
+  for(int i = 0; i < sizeOfUnit; i++){
+    potValues[40 + i] = currPot & 0xff;
+    currPot >>= 8;
+  }
+
+  currPot = analogRead(rightBackCart.linPotPin) * linPotFact;
+  for(int i = 0; i < sizeOfUnit; i++){
+    potValues[48 + i] = currPot & 0xff;
+    currPot >>= 8;
+  }
+  currPot = readPot(rightBackCart.rot1Pin, rightBackCart.rot2Pin);
+  for(int i = 0; i < sizeOfUnit; i++){
+    potValues[56 + i] = currPot & 0xff;
+    currPot >>= 8;
+  }
+
+  Serial.write(potValues, sizeOfUnit * 2 * 4);
 }
 
 //void physicsModel(float x, float y, float z, float& d1, float& d2, float& theta) {
