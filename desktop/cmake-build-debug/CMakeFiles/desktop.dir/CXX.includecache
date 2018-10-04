@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/Walter Raftus/Desktop/SurgeryBot/ProjectBraccio/desktop/headers/ArduinoHandler.h
+Windows.h
+-
+stdio.h
+-
+stdlib.h
+-
+queue
+-
+iostream
+-
+bitset
+-
+
+C:/Users/Walter Raftus/Desktop/SurgeryBot/ProjectBraccio/desktop/source/ArduinoHandler.cpp
+../headers/ArduinoHandler.h
+C:/Users/Walter Raftus/Desktop/SurgeryBot/ProjectBraccio/desktop/headers/ArduinoHandler.h
+
