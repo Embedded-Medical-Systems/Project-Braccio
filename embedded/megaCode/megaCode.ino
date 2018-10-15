@@ -134,8 +134,6 @@ short rotationControl(long long theta, Cart& cart) {
 
 void getDistances(long long& leftd1, long long& rightd1, long long& leftd2,
                   long long& rightd2, long long& leftTheta, long long& rightTheta) {
-
-
   leftd1 = 0;
   for(int i = 0; i < sizeOfUnit; i++){
     leftd1 += ((long long)Serial.read()) << 8 * i;
@@ -235,11 +233,16 @@ void setup() {
   setCartPins(rightFrontCart);
   setCartPins(rightBackCart);
   SPI.begin();
+
+  leftd1 = analogRead(leftFrontCart.linPotPin) * linPotFact;
+  rightd1 = analogRead(rightFrontCart.linPotPin) * linPotFact;
+  left21 = analogRead(leftBackCart.linPotPin) * linPotFact;
+  rightd2 = analogRead(rightBackCart.linPotPin) * linPotFact;
+  leftTheta = readPot(leftFrontCart.rot1Pin, leftFrontCart.rot2Pin);
+  rightTheta = readPot(rightFrontCart.rot1Pin, rightFrontCart.rot2Pin);
 }
 
 void loop() {
-  long long leftd1 = 0, rightd1 = 0, leftd2 = 0, rightd2 = 0, leftTheta = 0, rightTheta = 0;
-
   if(Serial.available()){
     getDistances(leftd1, rightd1, leftd2, rightd2, leftTheta, rightTheta);
   }
@@ -250,9 +253,9 @@ void loop() {
   short leftBackRot = rotationControl(leftTheta, leftBackCart);
 
   short rightFrontLin = linearControl(rightd1,rightFrontCart);
-  short rightBackLin = linearControl(rightd2,leftBackCart);
+  short rightBackLin = linearControl(rightd2,rightBackCart);
   short rightFrontRot = rotationControl(rightTheta, rightFrontCart);
-  short rightBackRot = rotationControl(rightTheta, leftBackCart);
+  short rightBackRot = rotationControl(rightTheta, rightBackCart);
   
   setMotorSpeed(leftFrontCart.slaveSelect, leftFrontLin, leftFrontRot);
   setMotorSpeed(leftBackCart.slaveSelect, leftBackLin, leftBackRot);
