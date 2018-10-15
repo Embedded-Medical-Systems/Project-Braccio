@@ -1,3 +1,0 @@
-C:/Users/Walter Raftus/Desktop/SurgeryBot/ProjectBraccio/desktop/cmake-build-debug/CMakeFiles/desktop.dir
-C:/Users/Walter Raftus/Desktop/SurgeryBot/ProjectBraccio/desktop/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/Walter Raftus/Desktop/SurgeryBot/ProjectBraccio/desktop/cmake-build-debug/CMakeFiles/rebuild_cache.dir
