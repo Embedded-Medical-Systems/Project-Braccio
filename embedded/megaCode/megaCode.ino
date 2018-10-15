@@ -99,7 +99,7 @@ void setMotorSpeed(byte slaveSelect, int transSpeed, int rotSpeed) {
   delay(1);
   SPI.transfer(rotSpeedByte);
   delay(1);
-  digitalWrite(leftFrontCart.slaveSelect, HIGH);
+  digitalWrite(slaveSelect, HIGH);
 }
 
 short linearControl(long long dist, Cart& cart) {
