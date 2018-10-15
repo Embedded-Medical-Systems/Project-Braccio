@@ -15,12 +15,16 @@ stdlib.h
 -
 queue
 -
+thread
+-
 iostream
 -
 bitset
 -
 
-C:/Users/Walter Raftus/Desktop/SurgeryBot/ProjectBraccio/desktop/source/ArduinoHandler.cpp
+C:/Users/Walter Raftus/Desktop/SurgeryBot/ProjectBraccio/desktop/source/main.cpp
+iostream
+-
 ../headers/ArduinoHandler.h
 C:/Users/Walter Raftus/Desktop/SurgeryBot/ProjectBraccio/desktop/headers/ArduinoHandler.h
 
